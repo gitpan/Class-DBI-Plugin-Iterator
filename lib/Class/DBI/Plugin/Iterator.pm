@@ -2,7 +2,7 @@ package Class::DBI::Plugin::Iterator;
 use strict;
 use base qw/Class::DBI::Iterator/;
 use vars qw/$VERSION $PREFETCH/;
-$VERSION = 0.09;
+$VERSION = 0.10;
 
 $PREFETCH = 3;
 
@@ -14,8 +14,38 @@ sub PREFETCH {
     $PREFETCH;
 }
 
+
+my %driver_cache;
+
+sub _get_iterator_class {
+	my $driver  = $_[1]->db_Main()->{Driver}->{Name};
+
+	return $driver_cache{$_[1]}{$driver} if($driver_cache{$_[1]}{$driver});
+
+	my ($self,$class) = @_;
+	my $subclass = __PACKAGE__;
+
+	if( $driver eq 'mysql' ){
+		$subclass .= '::mysql';
+	}
+	else{
+		$subclass .= '::subquery';
+	}
+
+	eval qq{require $subclass};
+	if($@){ $subclass = __PACKAGE__; }
+
+	$driver_cache{$_[1]}{$driver} = $subclass;
+
+	return $subclass;
+}
+
+
 sub new {
-    my($me, $them, $sth, $args) = @_;
+    my($me, $them, $sth, $args, $unknown) = @_;
+    my $class = !$unknown ? $me
+                          : $me->_get_iterator_class($them);
+
     bless {
         _class => $them,
         _sql   => $sth->{Statement},
@@ -24,8 +54,8 @@ sub new {
         _place => 0,
         _mapper => [],
         _data   => [],
-        _prefetch => $them->iteretor_prefetch || $me->PREFETCH,
-    }, $me;
+        _prefetch => $them->iterator_prefetch || $me->PREFETCH,
+    }, $class;
 }
 
 sub sql {
@@ -50,6 +80,7 @@ sub prefetch {
 sub count {
     my $self = shift;
     return $self->{_count} if defined $self->{_count};
+    return $self->all->count if $self->class->iterator_count_type eq 'use all';
 
     my $select_from_regexp = qr/(?si)^\s*SELECT\s+.+?\s+FROM\s+/;
     my $group_check_regexp = qr/(?si)\s+GROUP\s+BY\s+(.+?)(\s+HAVING\s+.+?)?(\s+ORDER\s+BY\s+.+?)?$/;
@@ -78,7 +109,8 @@ sub count {
         $sth->finish;
     };
     if ($@) {
-        warn "using \$self->all->count\n";
+        #warn "using \$self->all->count\n";
+        $self->class->iterator_count_type('use all');
         $self->{_count} = $self->all->count;
     }
 
@@ -142,15 +174,18 @@ sub import {
 
     $pkg->mk_classdata('plugin_iterator_disable');
 
-    $pkg->mk_classdata('iteretor_prefetch');
-    $pkg->iteretor_prefetch($options{prefetch} + 0)
+    $pkg->mk_classdata('iterator_prefetch');
+    $pkg->iterator_prefetch($options{prefetch} + 0)
             if $options{prefetch} and $options{prefetch} > 0;
 
+    $pkg->mk_classdata('iterator_count_type');
     my $iterator_class = __PACKAGE__;
+    my $driver_unknown = 1;
     if ($options{driver}) {
-        $iterator_class .= "::" . $options{driver};
+        $iterator_class .= __PACKAGE__ . "::" . $options{driver};
         eval qq{require $iterator_class};
-        $iterator_class = __PACKAGE__ if $@;
+        $iterator_class = undef if $@;
+        $driver_unknown = 0;
     }
 
     my $statement_check_regexp = $iterator_class->statement_check_regexp;
@@ -163,7 +198,7 @@ sub import {
             $sth = $class->$meth();
         }
 
-        return $iterator_class->new($class, $sth, $args)
+        return $iterator_class->new($class, $sth, $args, $driver_unknown)
                 if not $plugin_disable and
                    not $class->plugin_iterator_disable and
                    defined wantarray and not wantarray and

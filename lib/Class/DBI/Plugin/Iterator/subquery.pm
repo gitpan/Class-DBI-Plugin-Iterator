@@ -5,6 +5,7 @@ use base qw/Class::DBI::Plugin::Iterator/;
 sub count {
     my $self = shift;
     return $self->{_count} if defined $self->{_count};
+    return $self->SUPER::count if $self->class->iterator_count_type;
 
     my $sql = sprintf 'SELECT COUNT(*) FROM ( %s ) AS __GROUP_BY__', $self->sql;
 
@@ -15,8 +16,8 @@ sub count {
         $sth->finish;
     };
     if ($@) {
-        my $itr = $self->all;
-        $self->{_count} = $itr->count;
+        $self->class->iterator_count_type('no_subquery');
+        return $self->SUPER::count;
     }
 
     $self->{_count};
