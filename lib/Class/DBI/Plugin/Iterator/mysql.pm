@@ -1,13 +1,11 @@
 package Class::DBI::Plugin::Iterator::mysql;
 use strict;
 use base qw/Class::DBI::Plugin::Iterator/;
-use vars qw/$MYSQL3/;
-
 
 sub count {
     my $self = shift;
     return $self->{_count} if defined $self->{_count};
-    return $self->SUPER::count if $MYSQL3;
+    return $self->SUPER::count if $self->class->iterator_count_type;
 
     my $sql = $self->sql;
     $sql =~ s/SELECT(?:\s+(ALL|DISTINCT|DISTINCTROW))?\s+/SELECT $1 SQL_CALC_FOUND_ROWS /;
@@ -20,7 +18,7 @@ sub count {
         $sth->finish;
     };
     if ($@) {
-        $MYSQL3 = 1;
+        $self->class->iterator_count_type('mysql3');
         return $self->SUPER::count;
     }
 

@@ -16,7 +16,7 @@ sub count {
         $sth->finish;
     };
     if ($@) {
-        $self->class->iterator_count_type('no_subquery');
+        $self->class->iterator_count_type('no subquery');
         return $self->SUPER::count;
     }
 
