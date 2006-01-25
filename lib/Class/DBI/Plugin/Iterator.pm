@@ -2,7 +2,7 @@ package Class::DBI::Plugin::Iterator;
 use strict;
 use base qw/Class::DBI::Iterator/;
 use vars qw/$VERSION $PREFETCH/;
-$VERSION = 0.11;
+$VERSION = 0.12;
 
 $PREFETCH = 3;
 
@@ -120,6 +120,8 @@ sub slice {
     $end ||= $start;
 
     my $count = $end - $start + 1;
+    $count = 1 if $count < 1;
+    $start = 0 if $start < 0;
     my $sql = $self->sql . sprintf ' LIMIT %d OFFSET %d', $count, $start;
     my $sth = $self->class->db_Main->prepare($sql);
     $self->class->sth_to_objects($sth, $self->{_args}, 1);
@@ -198,3 +200,49 @@ sub import {
 }
 
 1;
+__END__
+=head1 NAME
+
+Class::DBI::Plugin::Iterator
+
+=head1 SYNOPSIS
+
+  package CD;
+  use base qw(Class::DBI);
+  __PACKAGE__->set_db(...);
+  
+  use Class::DBI::Plugin::Iterator;
+  
+  package main;
+  use CD;
+  my $itr = CD->retrieve_all;
+  my @discs = $itr->slice(0,9);
+  
+  my $new_it = $itr->slice(10,19);
+
+=head1 DESCRIPTION
+
+
+=head1 OPTION
+
+=head2 prefetch
+
+  use Class::DBI::Plugin::Iterator prefetch => 5;
+
+=head2 driver
+
+  use Class::DBI::Plugin::Iterator driver => 'mysql4';
+
+
+=head1 NOTES
+
+
+=head1 AUTHOR
+
+Takuji ASAKURA, E<lt>asakura@weakpoint.jpn.orgE<gt>
+
+=head1 SEE ALSO
+
+L<Class::DBI>, L<Class::DBI::Iterator>
+
+=cut

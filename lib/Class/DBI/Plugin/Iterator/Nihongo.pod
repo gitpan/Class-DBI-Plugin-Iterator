@@ -55,13 +55,12 @@ countしたときに極端にパフォーマンスが落ちる場合は、このケースかもしれません。
 
 また、ひょっとするとうまく動かない SQL があるかもしれません。
 
-=head1 参照
-
-Class::DBI, Class::DBI::Iterator
-
 =head1 著者
 
-Takuji ASAKURA, <asakura@weakpoint.jpn.org>
+Takuji ASAKURA, E<lt>asakura@weakpoint.jpn.orgE<gt>
+
+=head1 参照
+
+L<Class::DBI>, L<Class::DBI::Iterator>
 
 =cut
-

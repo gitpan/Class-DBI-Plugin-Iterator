@@ -3,7 +3,7 @@ use Test::More;
 
 BEGIN {
 	eval "use DBD::SQLite";
-	plan $@ ? (skip_all => 'needs DBD::SQLite for testing') : (tests => 41);
+	plan $@ ? (skip_all => 'needs DBD::SQLite for testing') : (tests => 42);
 }
 
 INIT {
@@ -103,4 +103,9 @@ my @newfilm  = (
 	$it->reset;
 	is $it->next->title, "Film 1", "Reset brings us to film 1 again";
 	is $it->next->title, "Film 2", "And 2 is still next";
+}
+
+{
+	my $it = NewFilm->search( Title => 'no match' );
+	is $it->count, 0, "correct slice size (array)";
 }
