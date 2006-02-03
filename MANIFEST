@@ -1,4 +1,5 @@
 MANIFEST
+README
 Makefile.PL
 lib/Class/DBI/Plugin/Iterator.pm
 lib/Class/DBI/Plugin/Iterator/mysql.pm

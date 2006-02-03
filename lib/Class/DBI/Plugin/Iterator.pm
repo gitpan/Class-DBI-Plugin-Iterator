@@ -2,7 +2,7 @@ package Class::DBI::Plugin::Iterator;
 use strict;
 use base qw/Class::DBI::Iterator/;
 use vars qw/$VERSION $PREFETCH/;
-$VERSION = 0.12;
+$VERSION = 0.13;
 
 $PREFETCH = 3;
 
@@ -203,7 +203,7 @@ sub import {
 __END__
 =head1 NAME
 
-Class::DBI::Plugin::Iterator
+Class::DBI::Plugin::Iterator - new Iterator for Class::DBI
 
 =head1 SYNOPSIS
 
@@ -211,7 +211,7 @@ Class::DBI::Plugin::Iterator
   use base qw(Class::DBI);
   __PACKAGE__->set_db(...);
   
-  use Class::DBI::Plugin::Iterator;
+  use Class::DBI::Plugin::Iterator;    # just it
   
   package main;
   use CD;

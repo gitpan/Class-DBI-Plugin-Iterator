@@ -1,5 +1,4 @@
 =encoding euc-jp
-
 =head1 名前
 
 Class::DBI::Plugin::Iterator - Class::DBI用の（ちゃんとした）イテレータ
